@@ -1,0 +1,5 @@
+option('static',
+  type: 'boolean',
+  value: false,
+  description: 'Whether to link everything statically'
+)
