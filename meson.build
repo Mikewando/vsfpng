@@ -43,11 +43,17 @@ libs += static_library('p2p_main',
     cpp_args: ['-std=c++20']
 )
 
+if host_machine.cpu_family().startswith('x86')
+  fpng_cpp_args = ['-std=c++20', '-DFPNG_NO_SSE=0', '-msse4.1', '-mpclmul', '-fno-strict-aliasing']
+else
+  fpng_cpp_args = ['-std=c++20', '-DFPNG_NO_SSE=1', '-fno-strict-aliasing']
+endif
+
 libs += static_library('fpng',
     [
         'src/fpng.cpp',
     ],
-    cpp_args: ['-std=c++20', '-msse4.1', '-mpclmul', '-fno-strict-aliasing']
+    cpp_args: fpng_cpp_args
 )
 
 shared_module('fpng', sources,
