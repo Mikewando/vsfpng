@@ -1,0 +1,98 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+  workflow_dispatch: {}
+
+jobs:
+  build-non-windows-wheel:
+    strategy:
+      matrix:
+        include:
+        - arch: linux_x86_64
+          runs-on: ubuntu-latest
+        - arch: linux_aarch64
+          runs-on: ubuntu-24.04-arm
+        - arch: macosx_x86_64
+          runs-on: macos-15-intel
+        - arch: macosx_arm64
+          runs-on: macos-15
+      fail-fast: false
+
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: pypa/cibuildwheel@v3.4.0
+      env:
+        CIBW_BUILD: cp312-*
+        CIBW_SKIP: cp312-musllinux*
+        CIBW_BUILD_FRONTEND: 'build; args: -Csetup-args="-Db_lto=true"'
+        CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15
+      with:
+        output-dir: dist
+
+    - name: Fix tag
+      run: |
+        cd dist
+        for whl in *.whl; do
+          pipx run wheel tags --remove --python-tag py3 --abi-tag none $whl
+        done
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: vsfpng-${{ matrix.arch }}
+        path: dist
+
+  build-windows-wheel:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: CLANG64
+        update: true
+        install: >-
+          base-devel
+          mingw-w64-clang-x86_64-python-build
+          mingw-w64-clang-x86_64-python-wheel
+
+    - name: Build
+      run: |
+        python -m build -Csetup-args="-Dprefer_static=true" -Csetup-args="-Db_lto=true" -Csetup-args="-Dcpp_link_args=-static"
+
+    - name: Fix tag
+      run: |
+        cd dist
+        for whl in *.whl; do
+          wheel tags --remove --python-tag py3 --abi-tag none --platform-tag win_amd64 $whl
+        done
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: vsfpng-sdist
+        path: dist/*.tar.gz
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: vsfpng-win_amd64
+        path: dist/*.whl
