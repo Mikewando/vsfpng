@@ -112,8 +112,6 @@ static const VSFrame *VS_CC writeGetFrame(int n, int activationReason, void *ins
             return frame;
         }
 
-        const VSFrame* frames[] = {frame, frame, frame};
-
         int width = vsapi->getFrameWidth(frame, 0);
         int height = vsapi->getFrameHeight(frame, 0);
 
@@ -240,7 +238,7 @@ static void VS_CC writeCreate(const VSMap *in, VSMap *out, void *userData, VSCor
 // Init
 
 VS_EXTERNAL_API(void) VapourSynthPluginInit2(VSPlugin *plugin, const VSPLUGINAPI *vspapi) {
-    vspapi->configPlugin("tools.mike.fpng", "fpng", "fpng for vapoursynth", VS_MAKE_VERSION(1, 0), VAPOURSYNTH_API_VERSION, 0, plugin);
+    vspapi->configPlugin("tools.mike.fpng", "fpng", "fpng for vapoursynth", VS_MAKE_VERSION(1, 1), VAPOURSYNTH_API_VERSION, 0, plugin);
     vspapi->registerFunction("Write", "clip:vnode;filename:data;firstnum:int:opt;compression:int:opt;overwrite:int:opt;alpha:vnode:opt;", "clip:vnode;", writeCreate, nullptr, plugin);
     fpng::fpng_init();
 }

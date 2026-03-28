@@ -1,21 +1,9 @@
 project('fpng Vapoursynth Plugin', 'cpp',
-  default_options: ['buildtype=release', 'warning_level=2', 'b_lto=true', 'b_ndebug=if-release', 'cpp_std=c++20'],
+  default_options: ['buildtype=release', 'warning_level=2', 'b_ndebug=if-release', 'cpp_std=c++20'],
   license: 'LGPL-2.1-or-later',
-  meson_version: '>=0.51.0',
-  version: '1'
+  meson_version: '>=0.64.0',
+  version: '1.1'
 )
-
-add_project_arguments('-Wno-unused-parameter', language: 'cpp')
-
-static = get_option('static')
-
-vapoursynth_dep = dependency('vapoursynth', version: '>=55').partial_dependency(compile_args: true, includes: true)
-
-deps = [
-  vapoursynth_dep,
-]
-
-install_dir = vapoursynth_dep.get_variable(pkgconfig: 'libdir') / 'vapoursynth'
 
 sources = [
   'src/plugin.cpp'
@@ -27,10 +15,6 @@ endif
 
 if host_machine.system() == 'windows'
   add_project_link_arguments('-lws2_32', language: 'cpp')
-endif
-
-if static
-  add_project_link_arguments('-static', language: 'cpp')
 endif
 
 libs = []
@@ -56,11 +40,13 @@ libs += static_library('fpng',
     cpp_args: fpng_cpp_args
 )
 
-shared_module('fpng', sources,
-  include_directories: 'src',
-  dependencies: deps,
-  link_with: libs,
+py = import('python').find_installation(pure: false)
+
+shared_module('fpng',
+  sources,
+  include_directories: ['src', 'vapoursynth/include'],
   install: true,
-  install_dir: install_dir,
+  install_dir: py.get_install_dir() / 'vapoursynth/plugins',
+  link_with: libs,
   gnu_symbol_visibility: 'hidden'
 )
