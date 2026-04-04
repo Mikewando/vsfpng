@@ -10,7 +10,7 @@ The motivation for this plugin was to dump frames of a VapourSynth script to PNG
 
 Usage is similar to `imwri.Write()` with ImageMagick options replaced with fpng options.
 
-```
+```rst
 .. function:: Write(clip clip, string filename[, int firstnum=0, int compression=1, bint overwrite=False, clip alpha])
    :module: fpng
 
@@ -43,7 +43,7 @@ Usage is similar to `imwri.Write()` with ImageMagick options replaced with fpng 
 
 The `examples/dump_frames.py` script included in this repository is not necessary to use the plugin, but may be useful either to directly dump frames or as a reference for the plugin usage.
 
-```
+```help
 usage: dump_frames.py [-h] -o OUTPUT [--filename FILENAME] [--overwrite] script
 
 Dump frames from VapourSynth script. Script will be converted to RGB24 using frame properties if they're available.
@@ -57,18 +57,6 @@ optional arguments:
                         The output directory for dumped images (default: None)
   --filename FILENAME   The filename template for dumped images (output is always .png) (default: frame_%d)
   --overwrite           Set to overwrite existing files (default: False)
-```
-
-## Building
-
-The author isn't overly familiar with C++ "build systems" so details may be missing. Broadly the only dependency not included with the source should be the VapourSynth SDK. The build system tested is MSYS2's mingw-w64 on Windows 10. It is quite likely that building is possible on other systems given sufficent experience building C++ libraries using those other systems.
-
-```sh
-meson setup -Dstatic=true build
-cd build/
-ninja
-
-# If all goes well libfpng.dll should exist within the build directory
 ```
 
 ## Bundled Dependencies
@@ -88,3 +76,6 @@ From [libp2p](https://github.com/sekrit-twc/libp2p/tree/ed0a37adf0fdab2af95845fc
 From [vs-imwri](https://github.com/vapoursynth/vs-imwri/tree/3042a327739e44b929f5ab02ff1da4d8de5ee061) fetched 2022-04-30
  - `vsutf16.h`
  - Several methods within `plugin.cpp` also directly come from `imwri.cpp`
+
+[vapoursynth](https://github.com/vapoursynth/vapoursynth) as a submodule for
+- `VapourSynth4.h`

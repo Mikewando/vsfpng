@@ -54,7 +54,7 @@ def main(args):
     import vapoursynth as vs
 
     clip, alpha, alt_output = vs.get_output(0)
-    clip = clip.resize.Spline36(format=vs.RGB24)
+    clip = clip.resize.Bicubic(format=vs.RGB24)
     start = time.perf_counter()
     clip = clip.fpng.Write(filename=(output_path / args.filename).with_suffix('.png'), alpha=alpha, overwrite=int(args.overwrite))
     for frame in track(clip.frames(close=True), total=len(clip)):
