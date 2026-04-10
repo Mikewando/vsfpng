@@ -20,14 +20,19 @@ on:
 
 jobs:
   build-sdist:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    outputs:
+      file: ${{ steps.build.outputs.file }}
     steps:
     - uses: actions/checkout@v6
       with:
         submodules: recursive
 
     - name: Build sdist
-      run: pipx run build --sdist
+      id: build
+      run: |
+        pipx run build --sdist
+        echo "file=$(basename dist/*.tar.gz)" >> "$GITHUB_OUTPUT"
 
     - uses: actions/upload-artifact@v7
       with:
@@ -35,6 +40,8 @@ jobs:
         path: dist/*.tar.gz
 
   build-wheel:
+    needs:
+      - build-sdist
     strategy:
       matrix:
         include:
@@ -53,9 +60,10 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/download-artifact@v8
       with:
-        submodules: recursive
+        path: sdist
+        merge-multiple: true
 
     - uses: pypa/cibuildwheel@v3.4.0
       env:
@@ -66,9 +74,9 @@ jobs:
           setup-args="-Db_lto=true"
           setup-args="-Dprefer_static=true"
           setup-args="-Dcpp_link_args=-static"
-
         CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15
       with:
+        package-dir: sdist/${{ needs.build-sdist.outputs.file }}
         output-dir: dist
 
     - name: Fix tag
