@@ -60,7 +60,7 @@ jobs:
     - uses: pypa/cibuildwheel@v3.4.0
       env:
         CIBW_BUILD: cp312-*
-        CIBW_SKIP: cp312-musllinux*
+        CIBW_SKIP: cp312-musllinux* *-win32
         CIBW_CONFIG_SETTINGS: setup-args="-Db_lto=true"
         CIBW_CONFIG_SETTINGS_WINDOWS: >-
           setup-args="-Db_lto=true"
