@@ -75,17 +75,12 @@ jobs:
           setup-args="-Dprefer_static=true"
           setup-args="-Dcpp_link_args=-static"
         CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15
+        CIBW_REPAIR_WHEEL_COMMAND: >-
+          cd "$(dirname {wheel})" &&
+          mv "$(pipx run wheel tags --remove --python-tag py3 --abi-tag none {wheel})" {dest_dir}/
       with:
         package-dir: sdist/${{ needs.build-sdist.outputs.file }}
         output-dir: dist
-
-    - name: Fix tag
-      shell: bash
-      run: |
-        cd dist
-        for whl in *.whl; do
-          pipx run wheel tags --remove --python-tag py3 --abi-tag none $whl
-        done
 
     - uses: actions/upload-artifact@v7
       with:
