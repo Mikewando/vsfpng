@@ -19,7 +19,22 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  build-non-windows-wheel:
+  build-sdist:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Build sdist
+      run: pipx run build --sdist
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: vsfpng-sdist
+        path: dist/*.tar.gz
+
+  build-wheel:
     strategy:
       matrix:
         include:
@@ -31,6 +46,8 @@ jobs:
           runs-on: macos-15-intel
         - arch: macosx_arm64
           runs-on: macos-15
+        - arch: win_amd64
+          runs-on: windows-latest
       fail-fast: false
 
     runs-on: ${{ matrix.runs-on }}
@@ -43,13 +60,19 @@ jobs:
     - uses: pypa/cibuildwheel@v3.4.0
       env:
         CIBW_BUILD: cp312-*
-        CIBW_SKIP: cp312-musllinux*
+        CIBW_SKIP: cp312-musllinux* *-win32
         CIBW_CONFIG_SETTINGS: setup-args="-Db_lto=true"
+        CIBW_CONFIG_SETTINGS_WINDOWS: >-
+          setup-args="-Db_lto=true"
+          setup-args="-Dprefer_static=true"
+          setup-args="-Dcpp_link_args=-static"
+
         CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15
       with:
         output-dir: dist
 
     - name: Fix tag
+      shell: bash
       run: |
         cd dist
         for whl in *.whl; do
@@ -61,58 +84,13 @@ jobs:
         name: vsfpng-${{ matrix.arch }}
         path: dist
 
-  build-windows-wheel:
-    runs-on: windows-latest
-
-    defaults:
-      run:
-        shell: msys2 {0}
-
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        submodules: recursive
-
-    - uses: msys2/setup-msys2@v2
-      with:
-        msystem: CLANG64
-        update: true
-        install: >-
-          base-devel
-          mingw-w64-clang-x86_64-git
-          mingw-w64-clang-x86_64-cmake
-          mingw-w64-clang-x86_64-ninja
-          mingw-w64-clang-x86_64-python-build
-          mingw-w64-clang-x86_64-python-wheel
-
-    - name: Build
-      run: |
-        python -m build -Csetup-args="-Dprefer_static=true" -Csetup-args="-Db_lto=true" -Csetup-args="-Dcpp_link_args=-static"
-
-    - name: Fix tag
-      run: |
-        cd dist
-        for whl in *.whl; do
-          wheel tags --remove --python-tag py3 --abi-tag none --platform-tag win_amd64 $whl
-        done
-
-    - uses: actions/upload-artifact@v7
-      with:
-        name: vsfpng-sdist
-        path: dist/*.tar.gz
-
-    - uses: actions/upload-artifact@v7
-      with:
-        name: vsfpng-win_amd64
-        path: dist/*.whl
-
   publish:
     if: github.event_name == 'release'
 
     runs-on: ubuntu-latest
     needs:
-      - build-non-windows-wheel
-      - build-windows-wheel
+      - build-sdist
+      - build-wheel
 
     permissions:
       id-token: write
