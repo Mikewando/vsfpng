@@ -22,7 +22,9 @@ classifiers = [
     "Programming Language :: C++",
     "Topic :: Multimedia :: Video",
 ]
-dependencies = ["VapourSynth"]
+dependencies = [
+    "VapourSynth>=74",
+]
 dynamic = ["version"]
 
 [project.urls]
@@ -30,7 +32,7 @@ Repository = "https://github.com/Mikewando/vsfpng.git"
 Issues = "https://github.com/Mikewando/vsfpng/issues"
 
 [tool.meson-python.wheel]
-exclude = ["*/*.dll.a"]
+exclude = ["*.lib"]
 
 [tool.cibuildwheel]
 build = "cp312-*"
