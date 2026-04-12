@@ -50,3 +50,7 @@ shared_module('fpng',
   link_with: libs,
   gnu_symbol_visibility: 'hidden'
 )
+
+py.install_sources(
+  'python/vsfpng.py'
+)
