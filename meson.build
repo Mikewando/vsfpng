@@ -41,10 +41,13 @@ libs += static_library('fpng',
 )
 
 py = import('python').find_installation(pure: false)
+incdir = include_directories(
+    run_command(py, '-c', 'import vapoursynth as vs; print(vs.get_include())', check: true).stdout().strip(),
+)
 
 shared_module('fpng',
   sources,
-  include_directories: ['src', 'vapoursynth/include'],
+  include_directories: ['src', incdir],
   install: true,
   install_dir: py.get_install_dir() / 'vapoursynth/plugins',
   link_with: libs,
