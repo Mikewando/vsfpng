@@ -25,10 +25,16 @@
 #include <windows.h>
 
 static std::wstring utf16_from_utf8(const std::string &str) {
-    int required_size = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
-    std::wstring wbuffer;
-    wbuffer.resize(required_size - 1);
-    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), static_cast<int>(str.size()), &wbuffer[0], required_size);
+    int required_size = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
+    if (required_size <= 0)
+        return {};
+
+    std::wstring wbuffer(static_cast<size_t>(required_size), L'\0');
+    int written = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.c_str(), -1, wbuffer.data(), required_size);
+    if (written <= 0)
+        return {};
+
+    wbuffer.resize(static_cast<size_t>(written - 1));
     return wbuffer;
 }
 
