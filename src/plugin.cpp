@@ -5,8 +5,11 @@
 #include <VapourSynth4.h>
 #include <VSHelper4.h>
 
-#include <string>
+#include <cstdio>
+#include <cstdlib>
 #include <memory>
+#include <string>
+#include <vector>
 
 #ifdef _WIN32
 #include "vsutf16.h"
@@ -73,6 +76,29 @@ static bool fileExists(const std::string &filename) {
     if (f)
         fclose(f);
     return !!f;
+}
+
+static bool writeBinaryFile(const std::string &filename, const std::vector<uint8_t> &data) {
+#ifdef _WIN32
+    // Windows CRT narrow fopen* does not reliably accept UTF-8 file paths.
+    FILE * f = _wfopen(utf16_from_utf8(filename).c_str(), L"wb");
+#else
+    FILE * f = fopen(filename.c_str(), "wb");
+#endif
+    if (!f)
+        return false;
+
+    bool ok = fwrite(data.data(), 1, data.size(), f) == data.size();
+    ok = fclose(f) != EOF && ok;
+    return ok;
+}
+
+static bool encodeImageToFile(const std::string &filename, const void *image, uint32_t width, uint32_t height, uint32_t channelCount, uint32_t flags) {
+    std::vector<uint8_t> encoded;
+    if (!fpng::fpng_encode_image_to_memory(image, width, height, channelCount, encoded, flags))
+        return false;
+
+    return writeBinaryFile(filename, encoded);
 }
 
 //////////////////////////////////////////
@@ -154,7 +180,7 @@ static const VSFrame *VS_CC writeGetFrame(int n, int activationReason, void *ins
 
         p2p_pack_frame(&p, P2P_ALPHA_SET_ONE);
 
-        bool write_status = fpng::fpng_encode_image_to_file(filename.c_str(), imageBuffer, width, height, channelCount, d->compression);
+        bool write_status = encodeImageToFile(filename, imageBuffer, width, height, channelCount, d->compression);
 
         vsapi->freeFrame(alphaFrame);
         free(imageBuffer);
